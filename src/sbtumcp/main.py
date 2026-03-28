@@ -41,7 +41,7 @@ async def ask_local_ollama(prompt: str, model: str = "llama3") -> str:
     """ส่งคำถามไปให้ Ollama ในเครื่องช่วยคิด (Offline AI)"""
     try:
         args = ["ollama", "run", model, prompt]
-        result = subprocess.run(args, capture_output=True, text=True, timeout=60, encoding='utf-8')
+        result = subprocess.run(args, capture_output=True, text=True, timeout=120, encoding='utf-8')
         return f"Ollama ({model}) Response:\n{result.stdout}"
     except Exception as e:
         return f"Ollama Error: {str(e)}"
