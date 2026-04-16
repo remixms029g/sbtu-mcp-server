@@ -11,8 +11,9 @@ mcp = FastMCP("SBTUMCP")
 DB_FILE = "sbtu_memory.db"
 
 def init_db():
-    with sqlite3.connect(DB_FILE) as conn:
-        conn.execute("CREATE TABLE IF NOT EXISTS memory (key TEXT PRIMARY KEY, value TEXT)")
+    pass # ปิดการทำงานชั่วคราวเพื่อไม่ให้สร้างไฟล์กวนระบบ
+    # with sqlite3.connect(DB_FILE) as conn:
+    #     conn.execute("CREATE TABLE IF NOT EXISTS memory (key TEXT PRIMARY KEY, value TEXT)")
 
 init_db()
 
@@ -48,24 +49,26 @@ async def ask_local_ollama(prompt: str, model: str = "llama3") -> str:
 
 @mcp.tool()
 async def save_memory(key: str, value: str) -> str:
-    """บันทึกข้อมูลสำคัญลง SQLite Memory"""
-    try:
-        with sqlite3.connect(DB_FILE) as conn:
-            conn.execute("INSERT OR REPLACE INTO memory (key, value) VALUES (?, ?)", (key, value))
-        return f"✅ บันทึก '{key}' ลงความจำเรียบร้อยแล้ว"
-    except Exception as e:
-        return f"Memory Error: {str(e)}"
+    """บันทึกข้อมูลสำคัญลง SQLite Memory (Currently disabled)"""
+    return "Memory Tool is temporarily disabled to prevent Git tracking issues."
+    # try:
+    #     with sqlite3.connect(DB_FILE) as conn:
+    #         conn.execute("INSERT OR REPLACE INTO memory (key, value) VALUES (?, ?)", (key, value))
+    #     return f"✅ บันทึก '{key}' ลงความจำเรียบร้อยแล้ว"
+    # except Exception as e:
+    #     return f"Memory Error: {str(e)}"
 
 @mcp.tool()
 async def recall_memory(key: str) -> str:
-    """ดึงความจำที่เคยบันทึกไว้ออกมา"""
-    try:
-        with sqlite3.connect(DB_FILE) as conn:
-            cursor = conn.execute("SELECT value FROM memory WHERE key = ?", (key,))
-            row = cursor.fetchone()
-            return f"ความจำของ {key}: {row[0]}" if row else f"❌ ไม่พบความจำชื่อ {key}"
-    except Exception as e:
-        return f"Recall Error: {str(e)}"
+    """ดึงความจำที่เคยบันทึกไว้ออกมา (Currently disabled)"""
+    return "Memory Tool is temporarily disabled to prevent Git tracking issues."
+    # try:
+    #     with sqlite3.connect(DB_FILE) as conn:
+    #         cursor = conn.execute("SELECT value FROM memory WHERE key = ?", (key,))
+    #         row = cursor.fetchone()
+    #         return f"ความจำของ {key}: {row[0]}" if row else f"❌ ไม่พบความจำชื่อ {key}"
+    # except Exception as e:
+    #     return f"Recall Error: {str(e)}"
 
 # --- [ RUN SERVER ] ---
 
