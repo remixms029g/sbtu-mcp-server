@@ -43,7 +43,7 @@ Server ตัวนี้เป็นส่วนหนึ่งของ **AI T
 
 ---
 
-## Tools ที่มีอยู่ตอนนี้
+## Features (Tools ที่มีอยู่ตอนนี้)
 
 ### `get_status()`
 เช็คสถานะระบบ คืนค่า current working directory และข้อความยืนยันว่า server online
@@ -86,13 +86,13 @@ conn.commit()
 
 เป้าหมาย: เพิ่ม tool ที่ยิง ADB broadcast ผ่าน action `shizuwall.CONTROL` เพื่อควบคุม ShizuWall (Hybrid Mode) บน OPPO A77 5G จาก MCP server โดยตรง — ยังไม่ได้เริ่มพัฒนา
 
-### Deploy / Docker — ❌ ไม่มี
+### Deploy / Docker — ✅ มีเรียบร้อยแล้ว (อัปเดตผ่าน Dockerfile)
 
-ยังไม่มี `Dockerfile` หรือ `compose.yaml` แม้ Windows PC (`sbtu`) จะมี Docker Desktop ติดตั้งอยู่แล้วที่ `E:\Docker`
+มี `Dockerfile` เรียบร้อยแล้วในโปรเจกต์ ซึ่งสามารถนำไปประกอบการทำงานคู่กับ Docker Desktop บน `sbtu` ได้ทันที (อ่านวิธีการใช้งานได้ในหัวข้อ [Docker usage](#docker-usage) ด้านล่าง)
 
 ---
 
-## การติดตั้ง (Setup)
+## Quick Start (การติดตั้ง)
 
 ต้องมี Python ≥3.13 และ [uv](https://github.com/astral-sh/uv) ติดตั้งไว้ก่อน
 
@@ -102,8 +102,8 @@ cd sbtu-mcp-server
 uv sync
 ```
 
-รัน server:
-
+### Quick Start ตัวอย่าง
+รันเซิร์ฟเวอร์แบบง่ายผ่าน stdio:
 ```bash
 uv run src/sbtumcp/main.py
 ```
@@ -112,6 +112,67 @@ uv run src/sbtumcp/main.py
 
 - `adb` ต้องอยู่ใน PATH (สำหรับ `run_adb_command`)
 - `ollama` ต้องรันอยู่ (สำหรับ `ask_local_ollama`) — ปัจจุบันเรียกผ่าน CLI, ในอนาคตจะเปลี่ยนเป็นเรียก REST API ที่ `localhost:11434`
+
+---
+
+## Claude Desktop config
+
+เพิ่มคอนฟิกเพื่อเปิดใช้เซิร์ฟเวอร์ sbtu-mcp-server ร่วมกับแอปพลิเคชัน **Claude Desktop** ในไฟล์:
+* **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+* **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+
+### ตัวอย่างการตั้งค่า (Claude Desktop config Example)
+```json
+{
+  "mcpServers": {
+    "sbtu-mcp-server": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/absolute/path/to/sbtu-mcp-server",
+        "run",
+        "python",
+        "src/sbtumcp/main.py"
+      ]
+    }
+  }
+}
+```
+
+---
+
+## Docker usage
+
+คุณสามารถรันเซิร์ฟเวอร์ MCP นี้ในคอนเทนเนอร์ด้วย Docker ตามตัวอย่างคำสั่งนี้:
+
+### 1. Build Docker Image
+```bash
+docker build -t sbtu-mcp-server:latest .
+```
+
+### 2. รันเพื่อทดสอบ stdio
+```bash
+docker run -i --rm sbtu-mcp-server:latest
+```
+
+---
+
+## ตัวอย่างการเรียก tool
+
+ตัวอย่างโครงสร้างคำสั่งและการส่งข้อมูลเพื่อเรียกใช้งานเครื่องมือ (Tools) ในเซิร์ฟเวอร์นี้:
+
+* **`get_status()`**: เช็กสถานะการเชื่อมต่อออนไลน์และโฟลเดอร์ทำงานปัจจุบัน
+  ```json
+  get_status()
+  ```
+* **`run_adb_command(command)`**: รันคำสั่งผ่าน ADB เช่น ตรวจสอบรายการอุปกรณ์ที่เชื่อมต่อ
+  ```json
+  run_adb_command(command: "devices")
+  ```
+* **`ask_local_ollama(prompt, model)`**: ส่งข้อคำถามประมวลผลกับปัญญาประดิษฐ์ท้องถิ่น (Ollama)
+  ```json
+  ask_local_ollama(prompt: "Explain MCP in one sentence", model: "gemma3-1b-gpu-custom")
+  ```
 
 ---
 

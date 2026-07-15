@@ -1,0 +1,22 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json",
+  "name": "io.github.remixms029g/sbtu-mcp-server",
+  "title": "SBTU ADB & Local AI MCP Server",
+  "description": "Production-ready MCP server for running ADB commands and querying local Ollama offline AI from Termux.",
+  "version": "0.1.0",
+  "websiteUrl": "https://github.com/remixms029g/sbtu-mcp-server",
+  "repository": {
+    "url": "https://github.com/remixms029g/sbtu-mcp-server",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "sbtu-mcp-server",
+      "version": "0.1.0",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}
