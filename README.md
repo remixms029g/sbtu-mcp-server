@@ -1,6 +1,153 @@
 # SBTU-MCP-SERVER
 
-MCP server for **SBTU Tech Ecosystem** — integrates AI Agentic with Android Studio and Termux, Tailscale, MCP Tools and Skills with AI in Devices.
+MCP (Model Context Protocol) server สำหรับ **SBTU Tech Ecosystem** — สะพานเชื่อมระหว่าง AI Agent (Claude, Gemini CLI) กับ Android device, Termux, และ local AI infrastructure ผ่าน Tailscale mesh
+
+*Developed by Master Ball (Bridge Master) for SBTU Technology Infrastructure.*
 
 ---
-*Developed by Master Ball (Bridge Master) for SBTU Technology Infrastructure.*
+
+## ภาพรวม (Overview)
+
+sbtu-mcp-server เป็น MCP server ที่รันบน Windows PC (`sbtu`, node หลักใน Tailscale mesh) ทำหน้าที่เป็นตัวกลางให้ AI agent ภายนอก (เช่น Claude Desktop ผ่าน MCP protocol) สามารถ:
+
+- สั่งงาน Android device ผ่าน ADB
+- เรียกใช้ local LLM ผ่าน Ollama โดยไม่ต้องพึ่ง cloud
+- (แผน) เก็บ context/memory แบบ persistent ผ่าน SQLite
+
+Server ตัวนี้เป็นส่วนหนึ่งของ **AI Trinity architecture** — ทำงานร่วมกับ Claude (พี่บริดจ์), Gemini CLI (น้องลี่), See AI (พี่ซี) โดยแต่ละตัวรักษา Identity Independence ไม่ merge role กัน
+
+---
+
+## สถาปัตยกรรม (Architecture)
+
+```
+┌─────────────────┐         MCP Protocol          ┌──────────────────────┐
+│  Claude Desktop  │ ◄────────────────────────────► │   sbtu-mcp-server     │
+│  (หรือ MCP client)│                                │   (FastMCP, Python)   │
+└─────────────────┘                                └──────────┬───────────┘
+                                                                │
+                                    ┌───────────────────────────┼───────────────────────────┐
+                                    │                            │                            │
+                              subprocess                   subprocess                   (แผน)
+                              (adb CLI)                   (ollama CLI)                 sqlite3
+                                    │                            │                            │
+                                    ▼                            ▼                            ▼
+                          ┌──────────────────┐         ┌──────────────────┐        ┌──────────────────┐
+                          │  Android device   │         │  Ollama (local)   │        │  memory.db         │
+                          │  (ผ่าน ADB/USB     │         │  localhost:11434  │        │  (key-value store) │
+                          │  หรือ Tailscale)   │         │                    │        │  ยังไม่ได้เชื่อมต่อ │
+                          └──────────────────┘         └──────────────────┘        └──────────────────┘
+```
+
+**Tech stack:** Python ≥3.13, [FastMCP](https://github.com/modelcontextprotocol/python-sdk) (`mcp[cli]>=1.26.0`), package management ผ่าน `uv`
+
+---
+
+## Tools ที่มีอยู่ตอนนี้
+
+### `get_status()`
+เช็คสถานะระบบ คืนค่า current working directory และข้อความยืนยันว่า server online
+
+**สถานะ:** ✅ ทำงานสมบูรณ์
+
+### `run_adb_command(command: str)`
+รันคำสั่ง ADB ตามที่ระบุ (เช่น `devices`, `shell input tap x y`, `shell screencap`) โดยต่อท้าย `adb ` แล้ว execute ผ่าน `subprocess.run` (แยกคำสั่งด้วย `shlex` เพื่อความปลอดภัยระดับ shell-injection)
+
+**สถานะ:** ✅ ทำงานได้ | ⚠️ เป็น **generic passthrough** — รับคำสั่ง ADB อะไรก็ได้ที่ผ่านมา ไม่มี allow-list จำกัดขอบเขต ใครก็ตามที่เรียก tool นี้ได้เท่ากับมีสิทธิ์ควบคุม ADB เต็มรูปแบบ
+
+### `ask_local_ollama(prompt: str, model: str = "llama3")`
+ส่ง prompt ไปยัง Ollama ที่รันในเครื่องเดียวกัน
+
+**สถานะ:** ⚠️ **มี known bug** — ปัจจุบันเรียกผ่าน `subprocess.run(["ollama", "run", model, prompt], timeout=120)` ซึ่งเป็นการเรียก Ollama CLI แบบ blocking process มีปัญหา timeout ไม่เสถียรกับ prompt ยาวหรือ model โหลดช้า
+
+**แนวทางแก้ที่วางแผนไว้:** เปลี่ยนไปใช้ `httpx.AsyncClient` เรียก REST API ตรงที่ `http://localhost:11434/api/generate` (`stream: False`) แทน — ต้องเพิ่ม `httpx` เข้า `pyproject.toml` dependencies ก่อน (ปัจจุบันยังไม่มี)
+
+---
+
+## ส่วนที่วางแผนไว้แต่ยังไม่เสร็จ
+
+### SQLite Context Store — ❌ ยังไม่ทำงาน
+
+`src/sbtumcp/__init__.py` มีโค้ดร่างไว้:
+
+```python
+conn.execute("""
+    CREATE TABLE IF NOT EXISTS memory (
+        key TEXT PRIMARY KEY,
+        value TEXT
+    )
+""")
+conn.commit()
+```
+
+**ปัญหาปัจจุบัน:** ไฟล์นี้ไม่มี `import sqlite3` และไม่มีการประกาศตัวแปร `conn` — โค้ดนี้จะ throw `NameError` ทันทีถ้าถูกเรียก และ `main.py` ก็ยังไม่ได้ import อะไรจาก `sbtumcp` package ด้วยซ้ำ ต้องเขียนใหม่ทั้งการเชื่อมต่อ DB และเชื่อมเข้ากับ `main.py`
+
+### ShizuWall Broadcast Integration — ❌ ยังไม่มีในโค้ด
+
+เป้าหมาย: เพิ่ม tool ที่ยิง ADB broadcast ผ่าน action `shizuwall.CONTROL` เพื่อควบคุม ShizuWall (Hybrid Mode) บน OPPO A77 5G จาก MCP server โดยตรง — ยังไม่ได้เริ่มพัฒนา
+
+### Deploy / Docker — ❌ ไม่มี
+
+ยังไม่มี `Dockerfile` หรือ `compose.yaml` แม้ Windows PC (`sbtu`) จะมี Docker Desktop ติดตั้งอยู่แล้วที่ `E:\Docker`
+
+---
+
+## การติดตั้ง (Setup)
+
+ต้องมี Python ≥3.13 และ [uv](https://github.com/astral-sh/uv) ติดตั้งไว้ก่อน
+
+```bash
+git clone https://github.com/remixms029g/sbtu-mcp-server.git
+cd sbtu-mcp-server
+uv sync
+```
+
+รัน server:
+
+```bash
+uv run src/sbtumcp/main.py
+```
+
+### Requirements ภายนอกที่ต้องมี (ไม่ได้ manage ผ่าน pyproject.toml)
+
+- `adb` ต้องอยู่ใน PATH (สำหรับ `run_adb_command`)
+- `ollama` ต้องรันอยู่ (สำหรับ `ask_local_ollama`) — ปัจจุบันเรียกผ่าน CLI, ในอนาคตจะเปลี่ยนเป็นเรียก REST API ที่ `localhost:11434`
+
+---
+
+## Dependencies
+
+```toml
+[project]
+requires-python = ">=3.13"
+dependencies = [
+    "mcp[cli]>=1.26.0",
+]
+```
+
+**หมายเหตุ:** `httpx` ยังไม่อยู่ใน dependency list — ต้องเพิ่มก่อนแก้ bug ของ `ask_local_ollama`
+
+---
+
+## Roadmap (ลำดับที่เสนอไว้ ยังไม่ตัดสินใจ)
+
+| ลำดับ | งาน | เหตุผล |
+|---|---|---|
+| 1 | แก้ `ask_local_ollama` ให้ใช้ httpx แทน subprocess | เป็น blocker ที่รู้อยู่แล้ว ฟีเจอร์อื่นที่ต่อยอดจาก Ollama bridge จะพังตามถ้าไม่แก้ |
+| 2 | เชื่อม SQLite context store เข้ากับ `main.py` จริง | ปัจจุบันเป็นโค้ดลอย ไม่ทำงาน |
+| 3 | เพิ่ม `shizuwall.CONTROL` broadcast tool | ต่อยอดจาก ShizuWall ที่ตั้งค่าเสร็จแล้วบน A77 5G |
+| 4 | เพิ่ม Dockerfile/compose.yaml | รวม deploy เข้ากับ Docker Desktop stack บน `sbtu` |
+
+---
+
+## Ecosystem Context
+
+| Node (Tailscale) | Role |
+|---|---|
+| `sbtu` (Windows PC) | รัน sbtu-mcp-server, Docker Desktop, Ollama |
+| `oppo-a77-5g` | Primary Android — ShizuWall, Termux, Gemini CLI |
+| `cph1819` (OPPO F7) | Secondary/reference Android |
+
+Philosophy: **"Equal Brains, Unequal Wisdom"** — เรียนรู้ผ่านการลงมือทำ, Human in the Loop เสมอ
+
+## License MIT
