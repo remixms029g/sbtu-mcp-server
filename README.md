@@ -209,6 +209,10 @@ dependencies = [
 | `oppo-a77-5g` | Primary Android — ShizuWall, Termux, Gemini CLI |
 | `cph1819` (OPPO F7) | Secondary/reference Android |
 
-Philosophy: **"Equal Brains, Unequal Wisdom"** — เรียนรู้ผ่านการลงมือทำ, Human in the Loop เสมอ
+
+\## Design Principle
+Built for practical automation while keeping human oversight in every critical decision.
+
+สร้างขึ้นเพื่อการทำงานอัตโนมัติที่ใช้งานได้จริง พร้อมการกำกับดูแลโดยมนุษย์ในทุกการตัดสินใจสำคัญ
 
 ## License MIT
