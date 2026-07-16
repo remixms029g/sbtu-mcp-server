@@ -1,22 +1,85 @@
 {
-  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json",
-  "name": "io.github.remixms029g/sbtu-mcp-server",
-  "title": "SBTU ADB & Local AI MCP Server",
-  "description": "Production-ready MCP server for running ADB commands and querying local Ollama offline AI from Termux.",
-  "version": "0.1.0",
-  "websiteUrl": "https://github.com/remixms029g/sbtu-mcp-server",
+  "name": "sbtu-mcp-server",
+  "version": "0.2.0",
+  "author": "remixms029g (Master Ball)",
+  "description": "MCP server for SBTU Tech Ecosystem — integrates Claude AI with Android device via ADB and local Ollama LLM",
+  "homepage": "https://github.com/remixms029g/sbtu-mcp-server",
   "repository": {
-    "url": "https://github.com/remixms029g/sbtu-mcp-server",
-    "source": "github"
+    "type": "git",
+    "url": "https://github.com/remixms029g/sbtu-mcp-server.git"
   },
-  "packages": [
+  "license": "MIT",
+  "keywords": [
+    "mcp",
+    "android",
+    "adb",
+    "ollama",
+    "ai-agent",
+    "claude",
+    "local-llm",
+    "termux",
+    "iot"
+  ],
+  "tools": [
     {
-      "registryType": "pypi",
-      "identifier": "sbtu-mcp-server",
-      "version": "0.1.0",
-      "transport": {
-        "type": "stdio"
+      "name": "get_status",
+      "description": "Check server status and connectivity",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "run_adb_command",
+      "description": "Execute ADB commands on connected Android device",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "ADB command to execute (e.g., 'devices', 'shell input tap 100 200', 'shell screencap')"
+          }
+        },
+        "required": ["command"]
+      }
+    },
+    {
+      "name": "ask_local_ollama",
+      "description": "Send prompt to local Ollama LLM instance",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "description": "Prompt to send to Ollama"
+          },
+          "model": {
+            "type": "string",
+            "description": "Ollama model name (default: llama3)",
+            "default": "llama3"
+          }
+        },
+        "required": ["prompt"]
       }
     }
-  ]
+  ],
+  "installation": {
+    "pip": "pip install -e git+https://github.com/remixms029g/sbtu-mcp-server.git#egg=sbtu-mcp-server",
+    "docker": "docker build -t sbtu-mcp-server:latest https://github.com/remixms029g/sbtu-mcp-server.git"
+  },
+  "setup": {
+    "requirements": [
+      "Python >=3.13",
+      "uv package manager",
+      "adb (Android SDK tools)",
+      "ollama (for ask_local_ollama tool)"
+    ],
+    "steps": [
+      "git clone https://github.com/remixms029g/sbtu-mcp-server.git",
+      "cd sbtu-mcp-server",
+      "uv sync",
+      "Configure in Claude Desktop or Docker"
+    ]
+  }
 }
