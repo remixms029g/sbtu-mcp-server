@@ -1,0 +1,4 @@
+theme: jekyll-theme-minimal
+title: SBTU MCP Server
+description: MCP server for SBTU Tech Ecosystem - integrates Claude AI with GitHub
+show_downloads: true
