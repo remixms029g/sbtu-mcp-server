@@ -58,9 +58,7 @@ Server ตัวนี้เป็นส่วนหนึ่งของ **AI T
 ### `ask_local_ollama(prompt: str, model: str = "llama3")`
 ส่ง prompt ไปยัง Ollama ที่รันในเครื่องเดียวกัน
 
-**สถานะ:** ⚠️ **มี known bug** — ปัจจุบันเรียกผ่าน `subprocess.run(["ollama", "run", model, prompt], timeout=120)` ซึ่งเป็นการเรียก Ollama CLI แบบ blocking process มีปัญหา timeout ไม่เสถียรกับ prompt ยาวหรือ model โหลดช้า
-
-**แนวทางแก้ที่วางแผนไว้:** เปลี่ยนไปใช้ `httpx.AsyncClient` เรียก REST API ตรงที่ `http://localhost:11434/api/generate` (`stream: False`) แทน — ต้องเพิ่ม `httpx` เข้า `pyproject.toml` dependencies ก่อน (ปัจจุบันยังไม่มี)
+**สถานะ:** ✅ แก้ไขและอัปเดตเรียบร้อย | เปลี่ยนมาใช้ `httpx.AsyncClient` เรียกใช้งานผ่าน REST API ของ Ollama ที่ `http://localhost:11434/api/generate` (`stream: False`) เพื่อความเสถียร รวดเร็ว และไม่บล็อกเทรดหลัก (Non-blocking async) พร้อมรองรับกลไกสำรอง (CLI Fallback) ด้วยการรันผ่าน subprocess ในกรณีที่ REST API ปิดอยู่
 
 ---
 
@@ -183,10 +181,11 @@ docker run -i --rm sbtu-mcp-server:latest
 requires-python = ">=3.13"
 dependencies = [
     "mcp[cli]>=1.26.0",
+    "httpx>=0.24.0",
 ]
 ```
 
-**หมายเหตุ:** `httpx` ยังไม่อยู่ใน dependency list — ต้องเพิ่มก่อนแก้ bug ของ `ask_local_ollama`
+**หมายเหตุ:** `httpx` ถูกเพิ่มลงใน dependency list และแก้ bug ของ `ask_local_ollama` เรียบร้อยแล้ว
 
 ---
 
@@ -194,8 +193,8 @@ dependencies = [
 
 | ลำดับ | งาน | เหตุผล |
 |---|---|---|
-| 1 | แก้ `ask_local_ollama` ให้ใช้ httpx แทน subprocess | เป็น blocker ที่รู้อยู่แล้ว ฟีเจอร์อื่นที่ต่อยอดจาก Ollama bridge จะพังตามถ้าไม่แก้ |
-| 2 | เชื่อม SQLite context store เข้ากับ `main.py` จริง | ปัจจุบันเป็นโค้ดลอย ไม่ทำงาน |
+| 1 | แก้ `ask_local_ollama` ให้ใช้ httpx แทน subprocess | ✅ ทำงานสมบูรณ์แล้ว |
+| 2 | เชื่อม SQLite context store เข้ากับ `main.py` จริง | ปัจจุบันย้ายโค้ดต้นแบบที่ใช้งานไม่ได้ออกจากแพ็กเกจแล้ว รอการพัฒนาเต็มรูปแบบในเฟสถัดไป |
 | 3 | เพิ่ม `shizuwall.CONTROL` broadcast tool | ต่อยอดจาก ShizuWall ที่ตั้งค่าเสร็จแล้วบน A77 5G |
 | 4 | เพิ่ม Dockerfile/compose.yaml | รวม deploy เข้ากับ Docker Desktop stack บน `sbtu` |
 

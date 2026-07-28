@@ -1,7 +1,2 @@
-conn.execute("""
-    CREATE TABLE IF NOT EXISTS memory (
-        key TEXT PRIMARY KEY,
-        value TEXT
-    )
-""")
-conn.commit()
+# SBTU MCP Server Package Initialization
+# Note: SQLite context store is planned for persistent memory integration in the roadmap.
