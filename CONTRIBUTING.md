@@ -138,10 +138,9 @@ pytest src/ -v --cov=src/ --cov-report=term-missing
 
 ## Pull Request Process
 
-1. อัปเดต DEVELOPMENT_LOG.md ด้วยการเปลี่ยนแปลงของคุณ
-2. ตรวจสอบว่า CI/CD tests ผ่านทั้งหมด
-3. อย่างน้อย 1 reviewer ต้อง approve
-4. ลบ feature branch หลังจากรวม
+1. ตรวจสอบว่า CI/CD tests ผ่านทั้งหมด
+2. อย่างน้อย 1 reviewer ต้อง approve
+3. ลบ feature branch หลังจากรวม
 
 ## Report Issues
 

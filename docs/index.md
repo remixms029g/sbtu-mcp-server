@@ -70,5 +70,4 @@ python -m sbtu_mcp_server
 
 - [GitHub Repository](https://github.com/remixms029g/sbtu-mcp-server)
 - [README](../README.md)
-- [Development Log](../DEVELOPMENT_LOG.md)
 - [MIT License](../LICENSE)

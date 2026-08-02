@@ -33,3 +33,4 @@ These rules govern agent actions in this repository:
 - Never run destructive commands (`rm`, `dpkg`, `pm`) without stating the intent and waiting for confirmation.
 - If an interactive prompt (such as `debconf` or a Y/N prompt) appears, pause and report it to the user before answering.
 - A co-agent (Gemini CLI) operates in this same environment. Treat shared files and the Git remote as shared resources: coordinate and do not overwrite.
+ do not overwrite.
